@@ -1,9 +1,20 @@
 use std::fmt::Debug;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use num_traits::Zero;
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Default)]
 pub struct PolyGF2 {
     pub poly: u32,
+}
+
+impl Zero for PolyGF2 {
+    fn zero() -> Self {
+        PolyGF2 { poly: 0 }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.poly == 0
+    }
 }
 
 impl Debug for PolyGF2 {
@@ -67,26 +78,36 @@ impl MulAssign for PolyGF2 {
 }
 
 impl PolyGF2 {
-    fn divmod(self, rhs: Self) -> (Self, Self) {
-        if rhs == PolyGF2::default() {
+    pub fn divmod(self, rhs: Self) -> (Self, Self) {
+        if rhs.is_zero() {
             panic!("division by zero");
         }
-        if self == PolyGF2::default() {
-            return (PolyGF2::default(), PolyGF2::default());
-        }
-        if self.poly < rhs.poly {
-            return (PolyGF2::default(), self);
+
+        let mut quotient = 0;
+        let mut remainder = self.poly;
+        let divisor = rhs.poly;
+
+        while remainder != 0 && remainder.leading_zeros() <= divisor.leading_zeros() {
+            // Compute the shift needed to align leading terms
+            let shift = divisor.leading_zeros() - remainder.leading_zeros();
+            // Update the quotient by adding the shifted term
+            quotient ^= 1 << shift;
+            // Update the remainder by subtracting (XOR) the shifted divisor
+            remainder ^= divisor << shift;
         }
 
-        let mut result = 0;
-        let mut a = self.poly;
-        let b = rhs.poly;
-        while a >= b {
-            let shift = b.leading_zeros().saturating_sub(a.leading_zeros());
-            result ^= 1 << shift;
-            a ^= b << shift;
+        (
+            PolyGF2::new(quotient),  // The quotient
+            PolyGF2::new(remainder) // The remainder
+        )
+    }
+    
+    pub fn pow(&self, rhs: u32) -> Self {
+        let mut result = PolyGF2::new(1);
+        for _ in 0..rhs {
+            result *= *self;
         }
-        (PolyGF2 { poly: result }, PolyGF2 { poly: a })
+        result
     }
 }
 
@@ -221,5 +242,13 @@ mod tests {
         assert_eq!(PolyGF2::irreducible(degree), PolyGF2::new(0b1000011));
         let degree = 7;
         assert_eq!(PolyGF2::irreducible(degree), PolyGF2::new(0b10000011));
+    }
+
+    #[test]
+    fn test_reduction() {
+        assert_eq!(
+            PolyGF2::new(0b110) % PolyGF2::new(0b111),
+            PolyGF2::new(0b1),
+        );
     }
 }
