@@ -1,8 +1,8 @@
 use std::fmt::Debug;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign};
 use num_traits::Zero;
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy, Default)]
+#[derive(Eq, PartialEq, Hash, Clone, Copy, Default, PartialOrd)]
 pub struct PolyGF2 {
     pub poly: u32,
 }
@@ -139,6 +139,14 @@ impl RemAssign for PolyGF2 {
     }
 }
 
+impl Neg for PolyGF2 {
+    type Output = PolyGF2;
+
+    fn neg(self) -> Self::Output {
+        PolyGF2::default() - self
+    }
+}
+
 impl From<u32> for PolyGF2 {
     fn from(poly: u32) -> Self {
         PolyGF2 { poly }
@@ -170,6 +178,38 @@ impl PolyGF2 {
             }
         }
         PolyGF2::default()
+    }
+    
+    pub fn degree(&self) -> u32 {
+        self.poly.leading_zeros() ^ 31
+    }
+    
+    pub fn gcd(&self, rhs: Self) -> Self {
+        let mut a = *self;
+        let mut b = rhs;
+        while !b.is_zero() {
+            let r = a % b;
+            a = b;
+            b = r;
+        }
+        a
+    }
+    
+    pub fn lcm(&self, rhs: Self) -> Self {
+        let gcd = self.gcd(rhs);
+        *self * rhs / gcd
+    }
+    
+    pub fn eval(&self, x: u32) -> u32 {
+        let x = x & 1;
+        let mut poly = self.poly;
+        let mut result = poly & 1;
+        poly >>= 1;
+        while poly > 0 {
+            result ^= poly & x;
+            poly >>= 1;
+        }
+        result
     }
 }
 
@@ -250,5 +290,45 @@ mod tests {
             PolyGF2::new(0b110) % PolyGF2::new(0b111),
             PolyGF2::new(0b1),
         );
+    }
+    
+    #[test]
+    fn test_degree() {
+        assert_eq!(PolyGF2::new(0b110).degree(), 2);
+        assert_eq!(PolyGF2::new(0b111).degree(), 2);
+        assert_eq!(PolyGF2::new(0b1011).degree(), 3);
+        assert_eq!(PolyGF2::new(0b10011).degree(), 4);
+        assert_eq!(PolyGF2::new(0b100101).degree(), 5);
+    }
+    
+    #[test]
+    fn test_gcd() {
+        let a = PolyGF2::new(0b1001); // (x+1)(x^2+x+1)
+        let b = PolyGF2::new(0b11101); // (x+1)(x^3+x+1)
+        assert_eq!(a.gcd(b), PolyGF2::new(0b11)); // (x+1)
+        
+        let a = PolyGF2::new(0b11011); // (x+1)(x+1)(x^2+x+1)
+        let b = PolyGF2::new(0b100111); // (x+1)(x+1)(x^3+x+1)
+        assert_eq!(a.gcd(b), PolyGF2::new(0b101)); // (x+1)(x+1)
+    }
+    
+    #[test]
+    fn test_lcm() {
+        let a = PolyGF2::new(0b1001); // (x+1)(x^2+x+1)
+        let b = PolyGF2::new(0b11101); // (x+1)(x^3+x+1)
+        assert_eq!(a.lcm(b), PolyGF2::new(0b1010011)); // (x+1)(x^2+x+1)(x^3+x+1)
+        let a = PolyGF2::new(0b11011); // (x+1)(x+1)(x^2+x+1)
+        let b = PolyGF2::new(0b100111); // (x+1)(x+1)(x^3+x+1)
+        assert_eq!(a.lcm(b), PolyGF2::new(0b11110101));// (x+1)(x+1)(x^2+x+1)(x^3+x+1)
+    }
+    
+    #[test]
+    fn test_eval() {
+        let a = PolyGF2::new(0b110);
+        assert_eq!(a.eval(0), 0);
+        assert_eq!(a.eval(1), 0);
+        let a = PolyGF2::new(0b101);
+        assert_eq!(a.eval(0), 1);
+        assert_eq!(a.eval(1), 0);
     }
 }
