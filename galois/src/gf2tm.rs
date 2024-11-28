@@ -1,19 +1,26 @@
-use std::cmp::Ordering;
-use crate::Matrix;
-use crate::{matrix_element_type_def, PolyGF2};
-use num_traits::{Num, NumOps, One, Signed, Zero};
+use crate::matrix::MatrixElement;
+use crate::PolyGF2;
+use num_traits::{One, Zero};
 use polynomial::Polynomial;
+use std::cmp::Ordering;
 use std::collections::HashSet;
-use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
-use crate::matrix::MatrixElement;
 
-#[derive(Eq, Hash, Clone, Copy, Default, Debug, PartialEq)]
+#[derive(Eq, Hash, Clone, Copy, Debug, PartialEq)]
 pub struct GF2TM<const M: u32> {
     value: PolyGF2,
     irr: PolyGF2,
+}
+
+impl<const M: u32> Default for GF2TM<M> {
+    fn default() -> GF2TM<M> {
+        GF2TM {
+            value: PolyGF2::default(),
+            irr: PolyGF2::irreducible(M),
+        }
+    }
 }
 
 impl<const M: u32> GF2TM<M> {
@@ -23,14 +30,6 @@ impl<const M: u32> GF2TM<M> {
             irr: PolyGF2::irreducible(M),
         }
     }
-
-    pub fn default() -> GF2TM<M> {
-        GF2TM {
-            value: PolyGF2::default(),
-            irr: PolyGF2::irreducible(M),
-        }
-    }
-
     pub fn one() -> GF2TM<M> {
         GF2TM {
             value: PolyGF2::new(1),
@@ -245,8 +244,14 @@ mod tests {
 
     #[test]
     fn test_minimal_poly() {
-        assert_eq!(GF2TM::<2>::from(0b10u32).minimal_poly(), PolyGF2::new(0b111));
-        assert_eq!(GF2TM::<2>::from(0b11u32).minimal_poly(), PolyGF2::new(0b111));
+        assert_eq!(
+            GF2TM::<2>::from(0b10u32).minimal_poly(),
+            PolyGF2::new(0b111)
+        );
+        assert_eq!(
+            GF2TM::<2>::from(0b11u32).minimal_poly(),
+            PolyGF2::new(0b111)
+        );
 
         const DEGREE: u32 = 3;
         assert_eq!(PolyGF2::irreducible(DEGREE), PolyGF2::new(0b1011));

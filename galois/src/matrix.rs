@@ -3,8 +3,7 @@
 // Generic using the MatrixElement trait, which can be implemented with
 // the matrix_element_type_def macro.
 // Wikipedia reference: https://www.wikiwand.com/en/Matrix_(mathematics)
-use num_traits::{abs, One, Zero};
-use num_traits::real::Real;
+use num_traits::{One, Zero};
 use std::ops::{Add, AddAssign, Div, Index, IndexMut, Mul, Neg, Sub};
 
 // Define macro to build a matrix idiomatically
@@ -17,7 +16,7 @@ macro_rules! matrix {
 
 // Define a trait "alias" for suitable matrix elements
 pub trait MatrixElement:
-Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + AddAssign + Copy + From<u8>
+    Add<Output = Self> + Sub<Output = Self> + Mul<Output = Self> + AddAssign + Copy + From<u8>
 {
 }
 
@@ -128,7 +127,7 @@ impl<T: Div<Output = T> + MatrixElement + Zero + One + Neg<Output = T> + Partial
         let mut x = vec![T::zero(); n];
         for i in (0..n).rev() {
             let mut sum = T::zero();
-            for k in (i+1)..n {
+            for k in (i + 1)..n {
                 sum += lu[[i, k]] * x[k];
             }
             x[i] = (T::one() / lu[[i, i]]) * (y[i] - sum);
@@ -290,14 +289,12 @@ impl<T: MatrixElement> From<Vec<Vec<T>>> for Matrix<T> {
     }
 }
 
-
 #[cfg(test)]
 // rustfmt skipped to prevent unformatting matrix definitions to a single line
 #[rustfmt::skip] 
 mod tests {
     use super::Matrix;
     use std::panic;
-use num_traits::abs;
 
     const DELTA: f64 = 1e-3;
     macro_rules! assert_vec_f64_eq {
