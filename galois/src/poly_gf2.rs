@@ -180,8 +180,8 @@ impl PolyGF2 {
         PolyGF2::default()
     }
     
-    pub fn degree(&self) -> u32 {
-        self.poly.leading_zeros() ^ 31
+    pub fn degree(&self) -> usize {
+        (self.poly.leading_zeros() ^ 31) as usize
     }
     
     pub fn gcd(&self, rhs: Self) -> Self {

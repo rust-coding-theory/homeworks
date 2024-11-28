@@ -1,13 +1,16 @@
-use crate::PolyGF2;
-use num_traits::Zero;
+use std::cmp::Ordering;
+use crate::Matrix;
+use crate::{matrix_element_type_def, PolyGF2};
+use num_traits::{Num, NumOps, One, Signed, Zero};
 use polynomial::Polynomial;
 use std::collections::HashSet;
 use std::fmt::Display;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
+use crate::matrix::MatrixElement;
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy, Default, Debug)]
+#[derive(Eq, Hash, Clone, Copy, Default, Debug, PartialEq)]
 pub struct GF2TM<const M: u32> {
     value: PolyGF2,
     irr: PolyGF2,
@@ -37,6 +40,12 @@ impl<const M: u32> GF2TM<M> {
 
     pub fn value(&self) -> PolyGF2 {
         self.value
+    }
+}
+
+impl<const M: u32> PartialOrd for GF2TM<M> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.value.partial_cmp(&other.value)
     }
 }
 
@@ -144,6 +153,11 @@ impl<const M: u32> From<u32> for GF2TM<M> {
         }
     }
 }
+impl<const M: u32> From<u8> for GF2TM<M> {
+    fn from(poly: u8) -> Self {
+        Self::from(poly as u32)
+    }
+}
 
 impl<const M: u32> Zero for GF2TM<M> {
     fn zero() -> Self {
@@ -155,6 +169,18 @@ impl<const M: u32> Zero for GF2TM<M> {
 
     fn is_zero(&self) -> bool {
         self.value.is_zero()
+    }
+}
+impl<const M: u32> One for GF2TM<M> {
+    fn one() -> Self {
+        GF2TM {
+            value: PolyGF2::new(1),
+            irr: PolyGF2::irreducible(M),
+        }
+    }
+
+    fn is_one(&self) -> bool {
+        self.value == PolyGF2::new(1)
     }
 }
 
@@ -211,33 +237,35 @@ impl<const M: u32> GF2TM<M> {
     }
 }
 
+impl<const M: u32> MatrixElement for GF2TM<M> {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_minimal_poly() {
-        assert_eq!(GF2TM::<2>::from(0b10).minimal_poly(), PolyGF2::new(0b111));
-        assert_eq!(GF2TM::<2>::from(0b11).minimal_poly(), PolyGF2::new(0b111));
+        assert_eq!(GF2TM::<2>::from(0b10u32).minimal_poly(), PolyGF2::new(0b111));
+        assert_eq!(GF2TM::<2>::from(0b11u32).minimal_poly(), PolyGF2::new(0b111));
 
         const DEGREE: u32 = 3;
         assert_eq!(PolyGF2::irreducible(DEGREE), PolyGF2::new(0b1011));
 
-        let elem = GF2TM::<DEGREE>::from(0b1);
+        let elem = GF2TM::<DEGREE>::from(0b1u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b11));
 
-        let elem = GF2TM::<DEGREE>::from(0b11);
+        let elem = GF2TM::<DEGREE>::from(0b11u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b1011));
 
-        let elem = GF2TM::<DEGREE>::from(0b10);
+        let elem = GF2TM::<DEGREE>::from(0b10u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b1101));
     }
 
     #[test]
     fn test_primitive() {
-        assert_eq!(GF2TM::<2>::primitive_element(), GF2TM::from(0b10));
-        assert_eq!(GF2TM::<3>::primitive_element(), GF2TM::from(0b10));
-        assert!(GF2TM::<2>::from(0b11).is_primitive());
-        assert!(GF2TM::<3>::from(0b11).is_primitive());
+        assert_eq!(GF2TM::<2>::primitive_element(), GF2TM::from(0b10u32));
+        assert_eq!(GF2TM::<3>::primitive_element(), GF2TM::from(0b10u32));
+        assert!(GF2TM::<2>::from(0b11u32).is_primitive());
+        assert!(GF2TM::<3>::from(0b11u32).is_primitive());
     }
 }
