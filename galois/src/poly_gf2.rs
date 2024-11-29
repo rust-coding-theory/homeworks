@@ -1,4 +1,7 @@
+use crate::GF2TM;
 use num_traits::Zero;
+use polynomial::Polynomial;
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
@@ -158,6 +161,16 @@ impl From<u32> for PolyGF2 {
 impl From<PolyGF2> for u32 {
     fn from(value: PolyGF2) -> Self {
         value.poly
+    }
+}
+
+impl<const M: u32> From<Polynomial<GF2TM<M>>> for PolyGF2 {
+    fn from(poly: Polynomial<GF2TM<M>>) -> Self {
+        poly.data()
+            .iter()
+            .rev()
+            .fold(0, |acc, x| acc << 1 | x.value().poly & 1)
+            .into()
     }
 }
 
@@ -329,5 +342,15 @@ mod tests {
         let a = PolyGF2::new(0b101);
         assert_eq!(a.eval(0), 1);
         assert_eq!(a.eval(1), 0);
+    }
+
+    #[test]
+    fn test_from_poly_over_gf2m() {
+        let poly = Polynomial::new(vec![
+            GF2TM::<3>::new(PolyGF2::new(1)),
+            GF2TM::<3>::new(PolyGF2::new(0)),
+            GF2TM::<3>::new(PolyGF2::new(1)),
+            GF2TM::<3>::new(PolyGF2::new(1)),
+        ]);
     }
 }

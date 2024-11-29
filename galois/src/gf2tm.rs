@@ -202,11 +202,6 @@ impl<const M: u32> GF2TM<M> {
             .map(|a| Polynomial::new(vec![*a, GF2TM::one()]))
             .reduce(|acc, e| acc * e)
             .expect("Empty set of conjugates")
-            .data()
-            .iter()
-            .map(|x| (x.value % self.irr).poly)
-            .reduce(|acc, e| acc << 1 ^ (e & 1))
-            .expect("Empty polynomial")
             .into()
     }
 
@@ -253,17 +248,28 @@ mod tests {
             PolyGF2::new(0b111)
         );
 
-        const DEGREE: u32 = 3;
-        assert_eq!(PolyGF2::irreducible(DEGREE), PolyGF2::new(0b1011));
+        assert_eq!(PolyGF2::irreducible(3), PolyGF2::new(0b1011));
 
-        let elem = GF2TM::<DEGREE>::from(0b1u32);
+        let elem = GF2TM::<3>::from(0b1u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b11));
 
-        let elem = GF2TM::<DEGREE>::from(0b11u32);
+        let elem = GF2TM::<3>::from(0b11u32);
+        assert_eq!(elem.minimal_poly(), PolyGF2::new(0b1101));
+
+        let elem = GF2TM::<3>::from(0b10u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b1011));
 
-        let elem = GF2TM::<DEGREE>::from(0b10u32);
-        assert_eq!(elem.minimal_poly(), PolyGF2::new(0b1101));
+        let elem = GF2TM::<4>::from(2u32);
+        assert_eq!(elem.minimal_poly(), PolyGF2::new(0b10011));
+
+        let elem = GF2TM::<4>::from(3u32);
+        assert_eq!(elem.minimal_poly(), PolyGF2::new(0b10011));
+
+        let elem = GF2TM::<4>::from(6u32);
+        assert_eq!(elem.minimal_poly(), PolyGF2::new(0b111));
+        
+        let elem = GF2TM::<4>::from(12u32);
+        assert_eq!(elem.minimal_poly(), PolyGF2::new(0b11111));
     }
 
     #[test]
