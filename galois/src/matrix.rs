@@ -95,7 +95,14 @@ impl<T: MatrixElement> Matrix<T> {
 }
 
 impl<T: Div<Output = T> + MatrixElement + Zero + One + Neg<Output = T> + PartialOrd> Matrix<T> {
-    pub fn solve_with_lu(&self, b: Vec<T>) -> Vec<T> {
+    pub fn solve_with_lu(&self, b: Vec<T>) -> Option<Vec<T>> {
+        if self.rows != self.cols {
+            panic!("Matrix is not square");
+        }
+        if self.determinant().is_zero() {
+            return None;
+        }
+        
         let n = self.rows;
 
         let mut lu = Self::zero(n, n);
@@ -132,7 +139,7 @@ impl<T: Div<Output = T> + MatrixElement + Zero + One + Neg<Output = T> + Partial
             }
             x[i] = (T::one() / lu[[i, i]]) * (y[i] - sum);
         }
-        x
+        Some(x)
     }
     pub fn determinant(&self) -> T {
         // Calculate the determinant of a square matrix
@@ -653,7 +660,7 @@ mod tests {
 
         let b= vec![1., -2., 0.];
         let x = vec![1., -2., -2.];
-        let res = a.solve_with_lu(b);
+        let res = a.solve_with_lu(b).unwrap();
         assert_vec_f64_eq!(res, x);
     }
     
