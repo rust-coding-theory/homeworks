@@ -267,7 +267,7 @@ mod tests {
 
         let elem = GF2TM::<4>::from(6u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b111));
-        
+
         let elem = GF2TM::<4>::from(12u32);
         assert_eq!(elem.minimal_poly(), PolyGF2::new(0b11111));
     }

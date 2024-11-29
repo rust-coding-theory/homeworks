@@ -1,7 +1,6 @@
 use crate::GF2TM;
 use num_traits::Zero;
 use polynomial::Polynomial;
-use std::collections::HashSet;
 use std::fmt::Debug;
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
