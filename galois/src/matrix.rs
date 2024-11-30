@@ -47,7 +47,7 @@ macro_rules! matrix_element_type_def {
 
 matrix_element_type_def!(i16, i32, i64, i128, u8, u16, u32, u128, f32, f64);
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Matrix<T: MatrixElement> {
     data: Vec<T>,
     rows: usize,
@@ -95,52 +95,84 @@ impl<T: MatrixElement> Matrix<T> {
 }
 
 impl<T: Div<Output = T> + MatrixElement + Zero + One + Neg<Output = T> + PartialOrd> Matrix<T> {
-    pub fn solve_with_lu(&self, b: Vec<T>) -> Option<Vec<T>> {
+    pub fn minor(&self, row: usize, col: usize) -> Self {
         if self.rows != self.cols {
             panic!("Matrix is not square");
         }
-        if self.determinant().is_zero() {
+
+        let mut minor = Vec::new();
+        for i in 0..self.rows {
+            if i == row {
+                continue;
+            }
+            for j in 0..self.cols {
+                if j == col {
+                    continue;
+                }
+                minor.push(self[[i, j]]);
+            }
+        }
+        Self {
+            data: minor,
+            rows: self.rows - 1,
+            cols: self.cols - 1,
+        }
+    }
+
+    pub fn adjugate(&self) -> Self {
+        if self.rows != self.cols {
+            panic!("Matrix is not square");
+        }
+
+        let mut adjugate = Vec::new();
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                let sign = if (i + j) % 2 == 0 {
+                    T::one()
+                } else {
+                    -T::one()
+                };
+                adjugate.push(sign * self.minor(i, j).determinant());
+            }
+        }
+        Self {
+            data: adjugate,
+            rows: self.rows,
+            cols: self.cols,
+        }
+    }
+
+    pub fn inv(&self) -> Option<Self> {
+        if self.rows != self.cols {
+            panic!("Matrix is not square");
+        }
+        let det = self.determinant();
+        if det.is_zero() {
             return None;
         }
-        
-        let n = self.rows;
-
-        let mut lu = Self::zero(n, n);
-        for i in 0..n {
-            for j in i..n {
-                let mut sum = T::zero();
-                for k in 0..i {
-                    sum += lu[[i, k]] * lu[[k, j]];
-                }
-                lu[[i, j]] = self[[i, j]] - sum;
-            }
-            for j in (i + 1)..n {
-                let mut sum = T::zero();
-                for k in 0..i {
-                    sum += lu[[j, k]] * lu[[k, i]];
-                }
-                lu[[j, i]] = (T::one() / lu[[i, i]]) * (self[[j, i]] - sum)
-            }
-        }
-
-        let mut y = vec![T::zero(); n];
-        for i in 0..n {
-            let mut sum = T::zero();
-            for k in 0..i {
-                sum += lu[[i, k]] * y[k];
-            }
-            y[i] = b[i] - sum;
-        }
-        let mut x = vec![T::zero(); n];
-        for i in (0..n).rev() {
-            let mut sum = T::zero();
-            for k in (i + 1)..n {
-                sum += lu[[i, k]] * x[k];
-            }
-            x[i] = (T::one() / lu[[i, i]]) * (y[i] - sum);
-        }
-        Some(x)
+        Some(&self.adjugate().transpose() * (T::one() / det))
     }
+
+    pub fn solve(&self, b: Vec<T>) -> Option<Vec<T>> {
+        if self.rows != self.cols {
+            panic!("Matrix is not square");
+        }
+        self.inv().map(|inv| inv.vec_mul(&b))
+    }
+
+    pub fn vec_mul(&self, x: &[T]) -> Vec<T> {
+        if self.cols != x.len() {
+            panic!("Matrix and vector dimensions do not match");
+        }
+        let mut result = vec![T::zero(); self.rows];
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                result[i] += self[[i, j]] * x[j];
+            }
+        }
+        result
+    }
+
     pub fn determinant(&self) -> T {
         // Calculate the determinant of a square matrix
         if self.rows != self.cols {
@@ -651,7 +683,7 @@ mod tests {
     }
     
     #[test]
-    fn test_lu_decompose_i32() {
+    fn test_solve() {
         let a = matrix![
             [3., 2., -1.],
             [2., -2., 4.],
@@ -660,7 +692,7 @@ mod tests {
 
         let b= vec![1., -2., 0.];
         let x = vec![1., -2., -2.];
-        let res = a.solve_with_lu(b).unwrap();
+        let res = a.solve(b).unwrap();
         assert_vec_f64_eq!(res, x);
     }
     

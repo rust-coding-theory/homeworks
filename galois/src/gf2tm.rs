@@ -104,7 +104,7 @@ impl<const M: u32> Div for GF2TM<M> {
 
     fn div(self, rhs: Self) -> Self::Output {
         GF2TM {
-            value: (self.value / rhs.value) % self.irr,
+            value: (self.value * rhs.inv().value) % self.irr,
             irr: self.irr,
         }
     }
@@ -189,6 +189,10 @@ impl<const M: u32> GF2TM<M> {
             value: self.value.pow(exp) % self.irr,
             irr: self.irr,
         }
+    }
+
+    pub fn inv(&self) -> Self {
+        self.pow((1 << M) - 2)
     }
 
     pub fn minimal_poly(&self) -> PolyGF2 {

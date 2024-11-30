@@ -351,5 +351,6 @@ mod tests {
             GF2TM::<3>::new(PolyGF2::new(1)),
             GF2TM::<3>::new(PolyGF2::new(1)),
         ]);
+        assert_eq!(PolyGF2::from(poly), PolyGF2::new(0b1101));
     }
 }
