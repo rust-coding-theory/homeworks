@@ -119,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode() {
+    fn test_decode_2_err() {
         const M: u32 = 4;
         let bch = BCH::<M>::new(7);
         let message = PolyGF2::new(0b11011);
@@ -128,5 +128,26 @@ mod tests {
         let received = PolyGF2::new(encoded.poly ^ err);
         let decoded = bch.decode(received);
         assert_eq!(decoded, Ok(message));
+    }
+
+    #[test]
+    fn test_decode_3_err() {
+        const M: u32 = 4;
+        let bch = BCH::<M>::new(7);
+        let message = PolyGF2::new(0b11011);
+        let encoded = bch.encode(message).unwrap();
+        let err = 0b10010000100000;
+        let received = PolyGF2::new(encoded.poly ^ err);
+        let decoded = bch.decode(received);
+        assert_eq!(decoded, Ok(message));
+    }
+
+    #[test]
+    fn test_decode_wrong_length() {
+        const M: u32 = 4;
+        let bch = BCH::<M>::new(7);
+        let received = PolyGF2::new(0b0);
+        let decoded = bch.decode(received);
+        assert_eq!(decoded, Err("Received message has wrong length"));
     }
 }
