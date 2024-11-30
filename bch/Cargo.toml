@@ -1,0 +1,9 @@
+[package]
+name = "bch"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+galois = { path = "../galois" }
+polynomial = "0.2.6"
+num-traits = "0.2.19"
