@@ -14,12 +14,16 @@ pub struct BCH<const M: u32> {
 }
 
 impl<const M: u32> BCH<M> {
-    pub fn from_distance(distance: usize) -> Self {
+    pub fn from_distance(distance: usize) -> Result<Self, &'static str> {
         Self::from_max_errors((distance - 1) / 2)
     }
 
-    pub fn from_max_errors(max_errors: usize) -> Self {
+    pub fn from_max_errors(max_errors: usize) -> Result<Self, &'static str> {
         let distance = 2 * max_errors + 1;
+        if distance >= 2_usize.pow(M) {
+            return Err("Distance is too large");
+        }
+        
         let primitive_element = GF2TM::<M>::primitive_element();
         let code_length = 2_usize.pow(M) - 1;
 
@@ -28,13 +32,13 @@ impl<const M: u32> BCH<M> {
             .reduce(|acc, e| acc.lcm(e))
             .unwrap();
         let message_length = code_length - generator_poly.degree();
-        BCH {
+        Ok(BCH {
             primitive_element,
             distance,
             code_length,
             message_length,
             generator_poly,
-        }
+        })
     }
 
     pub fn encode(&self, message: PolyGF2) -> Result<PolyGF2, &'static str> {
@@ -117,7 +121,7 @@ mod tests {
     #[test]
     fn test_encode() {
         const M: u32 = 4;
-        let bch = BCH::<M>::from_distance(7);
+        let bch = BCH::<M>::from_distance(7).unwrap();
         let message = PolyGF2::new(0b11011);
         let encoded = bch.encode(message);
         assert_eq!(encoded, Ok(PolyGF2::new(0b110111000010100)));
@@ -126,7 +130,7 @@ mod tests {
     #[test]
     fn test_decode_2_err() {
         const M: u32 = 4;
-        let bch = BCH::<M>::from_distance(7);
+        let bch = BCH::<M>::from_distance(7).unwrap();
         let message = PolyGF2::new(0b11011);
         let encoded = bch.encode(message).unwrap();
         let err = 0b10000000100000;
@@ -138,7 +142,7 @@ mod tests {
     #[test]
     fn test_decode_3_err() {
         const M: u32 = 4;
-        let bch = BCH::<M>::from_distance(7);
+        let bch = BCH::<M>::from_max_errors(3).unwrap();
         let message = PolyGF2::new(0b11011);
         let encoded = bch.encode(message).unwrap();
         let err = 0b10010000100000;
@@ -150,9 +154,15 @@ mod tests {
     #[test]
     fn test_decode_wrong_length() {
         const M: u32 = 4;
-        let bch = BCH::<M>::from_distance(7);
+        let bch = BCH::<M>::from_max_errors(3).unwrap();
         let received = PolyGF2::new(0b0);
         let decoded = bch.decode(received);
         assert_eq!(decoded, Err("Received message has wrong length"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_too_large_distance() {
+        let _bch = BCH::<4>::from_distance(100).unwrap();
     }
 }
