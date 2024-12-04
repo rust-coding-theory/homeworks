@@ -148,8 +148,6 @@ mod tests {
     }
 
     #[test]
-    
-    
     fn test_decode_wrong_length() {
         const M: u32 = 4;
         let bch = BCH::<M>::from_distance(7);
