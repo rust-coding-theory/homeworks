@@ -230,7 +230,7 @@ impl<const M: u32> GF2TM<M> {
                 return alpha;
             }
         }
-        unreachable!("Invalid irreducible polynomial");
+        unreachable!("Invalid irreducible polynomial, use M > 1");
     }
 }
 
