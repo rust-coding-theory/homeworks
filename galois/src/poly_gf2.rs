@@ -92,18 +92,12 @@ impl PolyGF2 {
         let divisor = rhs.poly;
 
         while remainder != 0 && remainder.leading_zeros() <= divisor.leading_zeros() {
-            // Compute the shift needed to align leading terms
             let shift = divisor.leading_zeros() - remainder.leading_zeros();
-            // Update the quotient by adding the shifted term
             quotient ^= 1 << shift;
-            // Update the remainder by subtracting (XOR) the shifted divisor
             remainder ^= divisor << shift;
         }
 
-        (
-            PolyGF2::new(quotient),  // The quotient
-            PolyGF2::new(remainder), // The remainder
-        )
+        (PolyGF2::new(quotient), PolyGF2::new(remainder))
     }
 
     pub fn pow(&self, rhs: u32) -> Self {
