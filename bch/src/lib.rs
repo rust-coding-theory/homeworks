@@ -23,7 +23,7 @@ impl<const M: u32> BCH<M> {
         if distance >= 2_usize.pow(M) {
             return Err("Distance is too large");
         }
-        
+
         let primitive_element = GF2TM::<M>::primitive_element();
         let code_length = 2_usize.pow(M) - 1;
 
