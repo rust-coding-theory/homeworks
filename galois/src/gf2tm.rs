@@ -204,8 +204,7 @@ impl<const M: u32> GF2TM<M> {
         conjugates
             .iter()
             .map(|a| Polynomial::new(vec![*a, GF2TM::one()]))
-            .reduce(|acc, e| acc * e)
-            .expect("Empty set of conjugates")
+            .fold(Polynomial::new(vec![GF2TM::one()]), |acc, e| acc * e)
             .into()
     }
 
