@@ -8,13 +8,19 @@ use num_traits::Zero;
 pub struct BCH<const M: u32> {
     primitive_element: GF2TM<M>,
     distance: usize,
+    max_errors: usize,
     code_length: usize,
     message_length: usize,
     generator_poly: PolyGF2,
 }
 
 impl<const M: u32> BCH<M> {
-    pub fn new(distance: usize) -> Self {
+    pub fn from_distance(distance: usize) -> Self {
+        Self::from_max_errors((distance - 1) / 2)
+    }
+
+    pub fn from_max_errors(max_errors: usize) -> Self {
+        let distance = 2 * max_errors + 1;
         let primitive_element = GF2TM::<M>::primitive_element();
         let code_length = 2_usize.pow(M) - 1;
 
@@ -26,6 +32,7 @@ impl<const M: u32> BCH<M> {
         BCH {
             primitive_element,
             distance,
+            max_errors,
             code_length,
             message_length,
             generator_poly,
@@ -112,7 +119,7 @@ mod tests {
     #[test]
     fn test_encode() {
         const M: u32 = 4;
-        let bch = BCH::<M>::new(7);
+        let bch = BCH::<M>::from_distance(7);
         let message = PolyGF2::new(0b11011);
         let encoded = bch.encode(message);
         assert_eq!(encoded, Ok(PolyGF2::new(0b110111000010100)));
@@ -121,7 +128,7 @@ mod tests {
     #[test]
     fn test_decode_2_err() {
         const M: u32 = 4;
-        let bch = BCH::<M>::new(7);
+        let bch = BCH::<M>::from_distance(7);
         let message = PolyGF2::new(0b11011);
         let encoded = bch.encode(message).unwrap();
         let err = 0b10000000100000;
@@ -133,7 +140,7 @@ mod tests {
     #[test]
     fn test_decode_3_err() {
         const M: u32 = 4;
-        let bch = BCH::<M>::new(7);
+        let bch = BCH::<M>::from_distance(7);
         let message = PolyGF2::new(0b11011);
         let encoded = bch.encode(message).unwrap();
         let err = 0b10010000100000;
@@ -145,7 +152,7 @@ mod tests {
     #[test]
     fn test_decode_wrong_length() {
         const M: u32 = 4;
-        let bch = BCH::<M>::new(7);
+        let bch = BCH::<M>::from_distance(7);
         let received = PolyGF2::new(0b0);
         let decoded = bch.decode(received);
         assert_eq!(decoded, Err("Received message has wrong length"));
