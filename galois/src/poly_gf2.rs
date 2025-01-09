@@ -236,6 +236,17 @@ mod tests {
     }
 
     #[test]
+    fn test_poly_sub() {
+        let a = PolyGF2::new(0);
+        let b = PolyGF2::new(1);
+        assert_eq!(a + b, a - b);
+        assert_eq!(a + b, b - a);
+        assert_eq!(a + b, b + a);
+        assert_eq!(a - b, PolyGF2::new(1));
+        assert_eq!(b - a, PolyGF2::new(1));
+    }
+
+    #[test]
     fn test_poly_mul() {
         let a = PolyGF2::new(0b101);
         let b = PolyGF2::new(0b110);
