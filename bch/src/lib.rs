@@ -15,13 +15,13 @@ pub struct BCH<const M: u32> {
 
 impl<const M: u32> BCH<M> {
     pub fn from_distance(distance: usize) -> Result<Self, &'static str> {
-        Self::from_max_errors((distance - 1) / 2)
+        Self::from_max_errors((distance - 1) / 2).map_err(|_| "Max allowed distance is M - 1")
     }
 
     pub fn from_max_errors(max_errors: usize) -> Result<Self, &'static str> {
         let distance = 2 * max_errors + 1;
         if distance >= 2_usize.pow(M) {
-            return Err("Distance is too large");
+            return Err("Max allowed errors should be < (2^M - 1) / 2");
         }
 
         let primitive_element = GF2TM::<M>::primitive_element();
@@ -110,6 +110,10 @@ impl<const M: u32> BCH<M> {
                     .is_zero()
             })
             .collect()
+    }
+
+    pub fn max_message_length(&self) -> usize {
+        self.message_length
     }
 }
 
