@@ -1,0 +1,8 @@
+[package]
+name = "reed_solomon"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+galois = { path = "../galois" }
+poly_it = "0.2.3"
