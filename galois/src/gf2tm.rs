@@ -185,10 +185,11 @@ impl<const M: u32> One for GF2TM<M> {
 
 impl<const M: u32> GF2TM<M> {
     pub fn pow(&self, exp: u32) -> GF2TM<M> {
-        GF2TM {
-            value: self.value.pow(exp) % self.irr,
-            irr: self.irr,
+        let mut result = GF2TM::new(PolyGF2::new(1 as u32));
+        for _ in 0..exp {
+            result *= *self;
         }
+        result
     }
 
     pub fn inv(&self) -> Self {

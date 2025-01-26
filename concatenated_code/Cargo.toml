@@ -1,0 +1,10 @@
+[package]
+name = "concatenated_code"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+galois = { path = "../galois" }
+reed_solomon = {path = "../reed_solomon"}
+bch = {path = "../bch"}
+poly_it = "0.2.3"
