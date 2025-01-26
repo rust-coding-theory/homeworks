@@ -18,6 +18,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "concatenated_code"
+version = "0.1.0"
+dependencies = [
+ "bch",
+ "galois",
+ "poly_it",
+ "reed_solomon",
+]
+
+[[package]]
 name = "galois"
 version = "0.1.0"
 dependencies = [
